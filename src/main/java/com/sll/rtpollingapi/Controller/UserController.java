@@ -1,0 +1,48 @@
+package com.sll.rtpollingapi.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.sll.rtpollingapi.DTO.TokenDTO;
+import com.sll.rtpollingapi.DTO.UserDTO;
+import com.sll.rtpollingapi.Exception.AuthorizationFailureException;
+import com.sll.rtpollingapi.Exception.GeneralException;
+import com.sll.rtpollingapi.Model.UserData;
+import com.sll.rtpollingapi.Model.Users;
+import com.sll.rtpollingapi.Service.UserService;
+import com.sll.rtpollingapi.Standards.Role;
+@RestController
+@RequestMapping("/user")
+public class UserController {
+    private UserService service;
+    @Autowired
+    public UserController(UserService service){
+        this.service=service;
+    }
+    @PostMapping("/register")
+    public ResponseEntity<TokenDTO> registerUser(@AuthenticationPrincipal UserData details, @RequestBody Users user) throws GeneralException{
+        if(!details.getRole().equals(Role.ADMIN)) throw new GeneralException("401:Not authorized for this endpoint");
+        return new ResponseEntity<>(service.register(user));
+    }
+    @PostMapping("/login")
+    public ResponseEntity<TokenDTO> loginUser(@RequestBody UserDTO user) throws AuthorizationFailureException{
+        return new ResponseEntity<>(service.login(user),HttpStatus.OK);
+    }
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenDTO> refreshUser(@RequestHeader(value = "refresh-token",required = false) String refreshToken) throws AuthorizationFailureException{
+        return new ResponseEntity<>(service.refresh(refreshToken),HttpStatus.OK);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<TokenDTO> logoutUser(@AuthenticationPrincipal UserDetails uds) throws AuthorizationFailureException{
+        service.endSession(uds);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+}
