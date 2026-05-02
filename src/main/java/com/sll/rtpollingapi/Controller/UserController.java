@@ -18,7 +18,6 @@ import com.sll.rtpollingapi.Exception.GeneralException;
 import com.sll.rtpollingapi.Model.UserData;
 import com.sll.rtpollingapi.Model.Users;
 import com.sll.rtpollingapi.Service.UserService;
-import com.sll.rtpollingapi.Standards.Role;
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -29,7 +28,6 @@ public class UserController {
     }
     @PostMapping("/register")
     public ResponseEntity<TokenDTO> registerUser(@AuthenticationPrincipal UserData details, @RequestBody Users user) throws GeneralException{
-        if(!details.getRole().equals(Role.ADMIN)) throw new GeneralException("401:Not authorized for this endpoint");
         return new ResponseEntity<>(service.register(user));
     }
     @PostMapping("/login")

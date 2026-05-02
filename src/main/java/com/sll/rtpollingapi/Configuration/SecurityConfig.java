@@ -36,6 +36,8 @@ public class SecurityConfig {
         return http
                 .formLogin(e -> e.disable())
                 .csrf(c -> c.disable())
+                .oauth2Client(o->o.disable())
+                .oauth2Login(o->o.disable())
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(e -> e.authenticationEntryPoint(authEntryPoint))
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
