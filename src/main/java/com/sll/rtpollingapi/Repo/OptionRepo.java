@@ -27,6 +27,6 @@ public interface OptionRepo extends JpaRepository<Option,Integer> {
 
     @Modifying
     @Transactional
-    void deleteAllByPollId();
+    void deleteAllByPollId(int pollId);
     
 }

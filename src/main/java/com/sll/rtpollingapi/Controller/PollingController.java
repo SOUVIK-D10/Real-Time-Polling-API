@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.sll.rtpollingapi.DTO.PollHeaderDTO;
 import com.sll.rtpollingapi.DTO.PollRequestDTO;
 import com.sll.rtpollingapi.DTO.PollResponseDTO;
 import com.sll.rtpollingapi.Exception.GeneralException;
@@ -35,7 +37,7 @@ public class PollingController {
         this.service=service;
     }
     @GetMapping("/all/my")
-    public ResponseEntity<List<PollResponseDTO>> getAllMy(
+    public ResponseEntity<List<PollHeaderDTO>> getAllMy(
         @AuthenticationPrincipal UserData details,
         @RequestParam(value = "page",required = false,defaultValue = "0") @NotNull Integer page,
         @RequestParam(value = "size",required = false, defaultValue = "5") @NotNull Integer size,
@@ -50,7 +52,7 @@ public class PollingController {
         return new ResponseEntity<>(service.viewMyPolls(details.getUserId(),page,size,sort),HttpStatus.OK);
     }
     @GetMapping("/all/others")
-    public ResponseEntity<List<PollResponseDTO>> getAllOthers(
+    public ResponseEntity<List<PollHeaderDTO>> getAllOthers(
         @AuthenticationPrincipal UserData details,
         @RequestParam(value = "page",required = false,defaultValue = "0") @NotNull Integer page,
         @RequestParam(value = "size",required = false, defaultValue = "5") @NotNull Integer size,
@@ -65,7 +67,7 @@ public class PollingController {
         return new ResponseEntity<>(service.viewOtherPolls(details.getUserId(),page,size,sort),HttpStatus.OK);
     }
     @GetMapping("/all")
-    public ResponseEntity<List<PollResponseDTO>> getAll(
+    public ResponseEntity<List<PollHeaderDTO>> getAll(
         @RequestParam(value = "page",required = false,defaultValue = "0") @NotNull Integer page,
         @RequestParam(value = "size",required = false, defaultValue = "5") @NotNull Integer size,
         @RequestParam(value = "sortby",required = false, defaultValue = "id") @NotNull String sortby,
@@ -77,6 +79,12 @@ public class PollingController {
         if(dir.equalsIgnoreCase("desc")) sort = Sort.by(sortby).descending();
         else sort = Sort.by(sortby).ascending();
         return new ResponseEntity<>(service.viewPolls(page,size,sort),HttpStatus.OK);
+    }
+    @GetMapping("/{pollId}/details")
+    public ResponseEntity<SseEmitter> getLivePollDataById(
+        @PathVariable int pollId
+    ){
+        return new ResponseEntity<>(service.newClient(pollId),HttpStatus.OK);
     }
     @PostMapping("/new")
     public ResponseEntity<PollResponseDTO> newPoll(

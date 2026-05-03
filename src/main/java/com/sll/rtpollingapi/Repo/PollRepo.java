@@ -22,7 +22,7 @@ public interface PollRepo extends JpaRepository<Poll,Integer>{
     
     @Modifying
     @Transactional
-    int deleteByIdAndUserId(int pollId, int userId);
+    int deleteByIdAndOwnerId(int pollId, int ownerId);
 
     
 }

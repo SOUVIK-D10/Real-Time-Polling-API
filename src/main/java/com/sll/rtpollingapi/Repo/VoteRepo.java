@@ -14,7 +14,7 @@ public interface VoteRepo extends JpaRepository<Vote,Integer> {
 
     @Modifying
     @Transactional
-    void deleteAllByPollId();
+    void deleteAllByPollId(int pollId);
 
     
 }
