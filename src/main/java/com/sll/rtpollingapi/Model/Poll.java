@@ -25,7 +25,7 @@ public class Poll {
         this.createdAt = LocalDateTime.now();
         this.expiryDate = expiryDate==null?createdAt.plusDays(1):expiryDate;
         this.topic = topic;
-        this.policy = policy==null?PollPolicy.NO_RESTRICTION:policy;
+        this.policy = (policy==null || policy<0 || policy>2)?PollPolicy.NO_RESTRICTION:policy;
     }
     public int getId() {
         return id;

@@ -23,6 +23,7 @@ import com.sll.rtpollingapi.Model.Vote;
 import com.sll.rtpollingapi.Repo.OptionRepo;
 import com.sll.rtpollingapi.Repo.PollRepo;
 import com.sll.rtpollingapi.Repo.VoteRepo;
+import com.sll.rtpollingapi.Standards.PollPolicy;
 
 
 
@@ -40,7 +41,7 @@ public class PollingService {
         this.sse=sse;
 	}
     public PollResponseDTO createPoll(int ownerId,PollRequestDTO dto){
-        Poll poll = new Poll(ownerId, dto.expiryDate(),dto.topic(), 0);
+        Poll poll = new Poll(ownerId, dto.expiryDate(),dto.topic(), dto.policy());
         poll = polldb.save(poll);
         List<Option> options = new ArrayList<>();
         List<OptionDTO> optionsDTO = new ArrayList<>();
@@ -91,7 +92,7 @@ public class PollingService {
             vote.setOptionId(optionId);
         }
         votedb.save(vote);
-        sse.broadcast(pollId,getPollById(pollId));
+        sse.broadcast(pollId,getPollDTO(poll,true));
     }
     public List<PollHeaderDTO> viewPolls(Integer page, Integer size, Sort sort) {
         List<Poll> polls = polldb.findAll();
@@ -108,17 +109,37 @@ public class PollingService {
         optiondb.deleteAllByPollId(pollId);
         votedb.deleteAllByPollId(pollId);
     }
-    public SseEmitter newClient(int pollId) {
-        SseEmitter emitter = sse.subscribe(pollId);
-        sse.unicast(pollId,emitter, getPollById(pollId));
-        return emitter;
+    public Object newClient(int userId,int pollId) {
+        Poll poll = polldb.getReferenceById(pollId);
+        boolean poll_is_expired = poll.getExpiryDate().isBefore(LocalDateTime.now());
+        SseEmitter emitter = null;
+        switch(poll.getPolicy()){
+            case PollPolicy.NO_RESTRICTION :
+                    if(poll_is_expired) return getPollDTO(poll,true);
+                    emitter = sse.subscribe(pollId);
+                    sse.unicast(pollId,emitter, getPollDTO(poll,true));
+                    return emitter;
+            case PollPolicy.RESULTS_AFTER_END :
+                    if(poll_is_expired || poll.getOwnerId() != userId) return getPollDTO(poll, poll_is_expired);
+                    emitter = sse.subscribe(pollId);
+                    sse.unicast(pollId,emitter, getPollDTO(poll,true));
+                    return emitter;
+            case PollPolicy.RESULTS_OWNER_ONLY :
+                    if(poll.getOwnerId() != userId) return getPollDTO(poll, false);
+                    if(poll_is_expired) return getPollDTO(poll, true);
+                    emitter = sse.subscribe(pollId);
+                    sse.unicast(pollId,emitter, getPollDTO(poll,true));
+                    return emitter;
+        }
+        return "ERROR";
     }
-    private PollResponseDTO getPollById(int id){
-        Poll poll = polldb.getReferenceById(id);
+    private PollResponseDTO getPollDTO(Poll poll,boolean is_vote_visible){
         List<OptionDTO> optionsDTO = new ArrayList<>();
         for(Option option:optiondb.findByPollId(poll.getId())){
-        OptionDTO opDTO = new OptionDTO(option.getId(), option.getData(), option.getVote());
-        optionsDTO.add(opDTO);
+            Integer vote = option.getVote();
+            if(!is_vote_visible) vote = null;
+            OptionDTO opDTO = new OptionDTO(option.getId(), option.getData(),vote);
+            optionsDTO.add(opDTO);
         }
         PollResponseDTO dto = new PollResponseDTO(poll.getId(),poll.getExpiryDate(),poll.getCreatedAt(),poll.getTopic(),optionsDTO);
         return dto;

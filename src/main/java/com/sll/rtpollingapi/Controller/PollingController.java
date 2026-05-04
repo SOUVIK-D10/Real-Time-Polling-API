@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.sll.rtpollingapi.DTO.PollHeaderDTO;
 import com.sll.rtpollingapi.DTO.PollRequestDTO;
@@ -81,10 +80,11 @@ public class PollingController {
         return new ResponseEntity<>(service.viewPolls(page,size,sort),HttpStatus.OK);
     }
     @GetMapping("/{pollId}/details")
-    public ResponseEntity<SseEmitter> getLivePollDataById(
+    public ResponseEntity<?> getLivePollDataById(
+        @AuthenticationPrincipal UserData details,
         @PathVariable int pollId
     ){
-        return new ResponseEntity<>(service.newClient(pollId),HttpStatus.OK);
+        return new ResponseEntity<>(service.newClient(details.getUserId(),pollId),HttpStatus.OK);
     }
     @PostMapping("/new")
     public ResponseEntity<PollResponseDTO> newPoll(

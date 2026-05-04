@@ -14,6 +14,7 @@ public record PollRequestDTO(
     @Size(min = 3, max = 100, message = "topic size is Min 3 to Max 100")
     String topic,
     @Size(min = 2, max = 10, message = "Options Min 2 to Max 10")
-    List<String> options
+    List<String> options,
+    Integer policy
 ) {
 }
