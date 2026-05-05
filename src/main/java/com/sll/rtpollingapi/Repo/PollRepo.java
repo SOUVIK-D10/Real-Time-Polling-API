@@ -1,7 +1,9 @@
 package com.sll.rtpollingapi.Repo;
 
-import java.util.List;
 
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,10 +17,16 @@ import jakarta.transaction.Transactional;
 public interface PollRepo extends JpaRepository<Poll,Integer>{
 
     @Query("SELECT p FROM Poll p WHERE p.ownerId = :ownerId")
-    List<Poll> myPolls(int ownerId, Pageable p);
+    Page<Poll> myPolls(int ownerId, Pageable p);
+
+    @Query("SELECT p FROM Poll p WHERE p.id = :id")
+    Optional<Poll> getSpecificPoll(int id);
+
+    @Query("SELECT p FROM Poll p")
+    Page<Poll> findAll(Pageable p);
 
     @Query("SELECT p FROM Poll p WHERE p.ownerId != :ownerId")
-    List<Poll> notMyPolls(int ownerId, Pageable p);
+    Page<Poll> notMyPolls(int ownerId, Pageable p);
     
     @Modifying
     @Transactional

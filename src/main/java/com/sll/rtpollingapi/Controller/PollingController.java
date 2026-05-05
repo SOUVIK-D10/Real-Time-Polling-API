@@ -83,7 +83,7 @@ public class PollingController {
     public ResponseEntity<?> getLivePollDataById(
         @AuthenticationPrincipal UserData details,
         @PathVariable int pollId
-    ){
+    ) throws GeneralException{
         return new ResponseEntity<>(service.newClient(details.getUserId(),pollId),HttpStatus.OK);
     }
     @PostMapping("/new")

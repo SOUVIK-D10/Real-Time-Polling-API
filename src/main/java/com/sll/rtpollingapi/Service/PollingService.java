@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -58,7 +57,7 @@ public class PollingService {
     }
     public List<PollHeaderDTO> viewMyPolls(int ownerId,int page,int size,Sort sort){
         Pageable p = PageRequest.of(page, size, sort);
-        List<Poll> polls = polldb.myPolls(ownerId,p);
+        List<Poll> polls = polldb.myPolls(ownerId,p).getContent();
         List<PollHeaderDTO> list = new ArrayList<>();
         for(Poll poll : polls){
             PollHeaderDTO dto = new PollHeaderDTO(poll.getId(),poll.getExpiryDate(),poll.getTopic());
@@ -68,7 +67,7 @@ public class PollingService {
     }
     public List<PollHeaderDTO> viewOtherPolls(int ownerId,int page,int size,Sort sort){
         Pageable p = PageRequest.of(page, size, sort);
-        List<Poll> polls = polldb.notMyPolls(ownerId,p);
+        List<Poll> polls = polldb.notMyPolls(ownerId,p).getContent();
         List<PollHeaderDTO> list = new ArrayList<>();
         for(Poll poll : polls){
             PollHeaderDTO dto = new PollHeaderDTO(poll.getId(),poll.getExpiryDate(),poll.getTopic());
@@ -77,7 +76,7 @@ public class PollingService {
         return list;
     }
     public void vote(int voterId,int pollId,int optionId) throws GeneralException{
-        Poll poll = polldb.getReferenceById(pollId);
+        Poll poll = polldb.getSpecificPoll(pollId).orElseThrow(()->new GeneralException("400:No Such Poll Exists"));
         if(poll==null) throw new GeneralException("400:No such poll existes");
         if(poll.getExpiryDate().isBefore(LocalDateTime.now()))
         throw new GeneralException("410: Poll expired");
@@ -95,7 +94,8 @@ public class PollingService {
         sse.broadcast(pollId,getPollDTO(poll,true));
     }
     public List<PollHeaderDTO> viewPolls(Integer page, Integer size, Sort sort) {
-        List<Poll> polls = polldb.findAll();
+        Pageable p = PageRequest.of(page, size, sort);
+        List<Poll> polls = polldb.findAll(p).getContent();
         List<PollHeaderDTO> list = new ArrayList<>();
         for(Poll poll : polls){
             PollHeaderDTO dto = new PollHeaderDTO(poll.getId(),poll.getExpiryDate(),poll.getTopic());
@@ -109,8 +109,8 @@ public class PollingService {
         optiondb.deleteAllByPollId(pollId);
         votedb.deleteAllByPollId(pollId);
     }
-    public Object newClient(int userId,int pollId) {
-        Poll poll = polldb.getReferenceById(pollId);
+    public Object newClient(int userId,int pollId) throws GeneralException {
+        Poll poll = polldb.getSpecificPoll(pollId).orElseThrow(() -> new GeneralException("400:No Such Poll Exists"));
         boolean poll_is_expired = poll.getExpiryDate().isBefore(LocalDateTime.now());
         SseEmitter emitter = null;
         switch(poll.getPolicy()){

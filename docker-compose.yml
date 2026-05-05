@@ -1,0 +1,38 @@
+services:
+    app:
+        build: .
+        ports:
+          - "8080:8080"
+        depends_on:
+          postgres:
+            condition: service_healthy
+        environment:
+          SPRING_APPLICATION_NAME: Real-Time-Polling-API
+          SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+          SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+          SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+          SPRING_JPA_HIBERNATE_DDL_AUTO: update
+          SPRING_JPA_SHOW_SQL: true
+          ACCESSTOKEN_KEY: ${ACCESSTOKEN_KEY}
+          REFRESHTOKEN_KEY: ${REFRESHTOKEN_KEY}
+          ACCESSTOKEN_LIFE: 3600000
+          REFRESHTOKEN_LIFE: 36000000
+    postgres:
+        image: postgres:latest
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        ports:
+          - "5432:5432"
+        volumes:
+          - postgres_data:/var/lib/postgresql
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+
+volumes:
+    postgres_data:
