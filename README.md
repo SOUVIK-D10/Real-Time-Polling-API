@@ -17,7 +17,7 @@ A REST API for polls with real-time vote updates using Server-Sent Events (SSE).
 - Spring Security + JWT
 - Spring Data JPA / Hibernate
 - PostgreSQL
-- Server-Sent Events (SSE)
+- Server-Sent Events (SSE) through Spring
 - Docker / Docker Compose
 
 ## Endpoint Overview
